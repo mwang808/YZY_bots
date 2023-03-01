@@ -17,6 +17,7 @@
 
 from controller import Robot
 import sys
+import numpy as np
 
 # We provide a set of utilities to help you with the development of your controller. You can find them in the utils folder.
 # If you want to see a list of examples that use them, you can go to https://github.com/cyberbotics/wrestling#demo-robot-controllers
