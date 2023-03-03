@@ -1,0 +1,30 @@
+ Volume in drive C is Windows
+ Volume Serial Number is 6230-22FB
+
+ Directory of C:\Users\lionh\Documents\webots\YZY_bots\controllers\motions
+
+2023/02/26  16:03             9,579 Backwards.motion
+2023/02/26  16:03             2,331 ForwardLoop.motion
+2023/02/26  16:03             5,827 Forwards.motion
+2023/02/26  16:03            14,888 Forwards50.motion
+2023/02/26  16:03             1,447 GetUpBack.motion
+2023/02/26  16:03             1,417 GetUpFront.motion
+2023/02/26  16:03             1,130 HandWave.motion
+2023/02/26  16:03            17,082 Shoot.motion
+2023/02/26  16:03            17,420 SideStepLeft.motion
+2023/02/26  16:03             7,035 SideStepLeftLoop.motion
+2023/02/26  16:03            20,127 SideStepRight.motion
+2023/02/26  16:03             7,037 SideStepRightLoop.motion
+2023/02/26  16:03               222 Stand.motion
+2023/02/26  16:03             5,108 StandUpFromFront.motion
+2023/02/26  16:03             6,848 TaiChi.motion
+2023/02/26  16:03            33,115 TurnLeft180.motion
+2023/02/26  16:03             7,149 TurnLeft20.motion
+2023/02/26  16:03             6,806 TurnLeft40.motion
+2023/02/26  16:03            10,729 TurnLeft60.motion
+2023/02/26  16:03             7,149 TurnRight20.motion
+2023/02/26  16:03             7,189 TurnRight40.motion
+2023/02/26  16:03            10,748 TurnRight60.motion
+2023/02/26  16:03             3,747 WipeForehead.motion
+              23 File(s)        204,130 bytes
+               0 Dir(s)  21,592,395,776 bytes free
