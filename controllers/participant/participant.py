@@ -15,8 +15,9 @@
 """Minimalist controller example for the Robot Wrestling Tournament.
    Demonstrates how to play a simple motion file."""
 
-from controller import Robot
-import sys
+from controller import Robot, DistanceSensor
+
+import sys,cv2,time
 import numpy as np
 
 # We provide a set of utilities to help you with the development of your controller. You can find them in the utils folder.
@@ -25,36 +26,105 @@ sys.path.append('..')
 from utils.motion_library import MotionLibrary
 from utils.fall_detection import FallDetection
 from utils.camera import Camera
-from utils.image_processing import ImageProcessing
+from utils.image_processing import ImageProcessing as IP
+from utils.current_motion_manager import CurrentMotionManager
+    
+def view2img(view,fname):
+    # Extract the RGB channels and merge them into a single image
+    bgr = view[:, :, :3]
+    alpha = view[:, :, 3]
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    rgba = cv2.merge((rgb, alpha))
+
+    # Save the image in RGB format
+    cv2.imwrite(fname, rgba[:, :, :3])
 
 class Wrestler (Robot):
-    def run(self):
+    SMALLEST_TURNING_RADIUS = 0.
+    TIME_BEFORE_DIRECTION_CHANGE = 200
+    def __init__(self):
+        Robot.__init__(self)
+        self.time_step = int(self.getBasicTimeStep())
+        self.current_motion = CurrentMotionManager()
+        #self.ipu=IP.ImageProcessing()
         # to load all the motions from the motions folder, we use the MotionLibrary class:
-        motion_library = MotionLibrary()
+       
+        self.motion= MotionLibrary()
+        self.camera = Camera(self)
+        self.fall_detector = FallDetection(self.time_step, self)
+        #self.gait_manager = GaitManager(self, self.time_step)
+        self.heading_angle = 3.14 / 2
+        # Time before changing direction to stop the robot from falling off the ring
+        self.counter = 0
         
-        # retrieves the WorldInfo.basicTimeTime (ms) from the world file
-        time_step = int(self.getBasicTimeStep())
-        self.time_step=time_step
-        falldetector=FallDetection(time_step,self)
-        camera=Camera(self)
-        ipu=ImageProcessing()
+        self.gyro = self.getDevice('gyro')
+        self.gyro.enable(self.time_step)
+        self.sonarl = self.getDevice('Sonar/Left')
+        self.sonarl.enable(self.time_step)
+        self.sonarr = self.getDevice('Sonar/Right')
+        self.sonarr.enable(self.time_step)
         
+    def _get_normalized_opponent_x(self):
+        """Locate the opponent in the image and return its horizontal position in the range [-1, 1]."""
+        img = self.camera.get_image()
+        _, _, horizontal_coordinate = IP.locate_opponent(img)
+        if horizontal_coordinate is None:
+            return 0
+        return horizontal_coordinate * 2 / img.shape[1] - 1
+        
+    def walk(self):
+        """Walk towards the opponent like a homing missile."""
+        normalized_x = self._get_normalized_opponent_x()
+        # We set the desired radius such that the robot walks towards the opponent.
+        # If the opponent is close to the middle, the robot walks straight.
+        desired_radius = (self.SMALLEST_TURNING_RADIUS / normalized_x) if abs(normalized_x) > 1e-3 else None
+        # TODO: position estimation so that if the robot is close to the edge, it switches dodging direction
+        if self.counter > self.TIME_BEFORE_DIRECTION_CHANGE:
+            self.heading_angle = - self.heading_angle
+            self.counter = 0
+        self.counter += 1
+        self.gait_manager.command_to_motors(desired_radius=desired_radius, heading_angle=self.heading_angle)
+
+
+    def run(self):
+        
+        #print(self.time_step)
         n=0
-        while self.step(time_step) != -1:  # mandatory function to make the simulation run
-            view=camera.get_image()
-            a=ipu.locate_opponent(view)
+        
+        #motion_library.play('TestMove')
+        while self.step(self.time_step) != -1:  # mandatory function to make the simulation run
+            value = [self.sonarl.getValue(),self.sonarr.getValue()]
+            #print("Sonar value is: ", value)
+            view=self.camera.get_image()
+            #view2img(view,'v'+str(n)+'.png')
+            _, _, horizontal_coordinate=IP.locate_opponent(view)
             #print(n,'\n',a[1],a[2])
-            falldetector.check()
-            
+            self.fall_detector.check()
+            #if self.fall_detector.detect_fall():
+            #    self.motion.play('TestMove')
+            if self._get_normalized_opponent_x()<-.25:
+                self.motion.play('ShiftLeft')
+                #print('move left')
+                #    self.motion.play('SideStepLeftLoop')
+            elif self._get_normalized_opponent_x()>.25:
+                self.motion.play('ShiftRight')
+                    #self.motion.play('TestMove')
+           
             #print(self.step(time_step))
-            if n<=260:
-                motion_library.play('ForwardLoop')
-                #print(n)
+            
+                #print(self.current_motion.get())
+            #    print(n)
             else:
+                self.motion.play('MoveForward')
+                
+                #print(self.current_motion.get())
+            #else:
                 #print(n)
-                motion_library.play('Forwards')
-                #motion_library.play('TestMove')
+                #self.motion.play('Forwards')
+                #self.walk()
+            #self.motion.play('TestMove')
             n=n+1
+            #time.sleep(5)
 
 
 # create the Robot instance and run main loop

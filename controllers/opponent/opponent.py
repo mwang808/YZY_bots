@@ -15,17 +15,46 @@
 """Minimalist controller example for the Robot Wrestling Tournament.
    Demonstrates how to play a simple motion file."""
 
-from controller import Robot, Motion
+from controller import Robot
+import sys
+import numpy as np
 
+# We provide a set of utilities to help you with the development of your controller. You can find them in the utils folder.
+# If you want to see a list of examples that use them, you can go to https://github.com/cyberbotics/wrestling#demo-robot-controllers
+sys.path.append('..')
+from utils.motion_library import MotionLibrary
+from utils.fall_detection import FallDetection
+from utils.camera import Camera
+from utils.image_processing import ImageProcessing
 
 class Wrestler (Robot):
     def run(self):
-        motion = Motion('../motions/HandWave.motion')  # look into this text file, it's easy to understand
-        motion.setLoop(True)
-        motion.play()
-        time_step = int(self.getBasicTimeStep())  # retrieves the WorldInfo.basicTimeTime (ms) from the world file
-        while self.step(time_step) != -1:  # runs the hand wave motion in a loop until Webots quits
-            pass
+        # to load all the motions from the motions folder, we use the MotionLibrary class:
+        motion_library = MotionLibrary()
+        
+        # retrieves the WorldInfo.basicTimeTime (ms) from the world file
+        time_step = int(self.getBasicTimeStep())
+        self.time_step=time_step
+        falldetector=FallDetection(time_step,self)
+        camera=Camera(self)
+        ipu=ImageProcessing()
+        
+        n=0
+        while self.step(time_step) != -1:  # mandatory function to make the simulation run
+            view=camera.get_image()
+            a=ipu.locate_opponent(view)
+            #print(n,'\n',a[1],a[2])
+            falldetector.check()
+            
+            #print(self.step(time_step))
+            if n<=260:
+                motion_library.play('ForwardLoop')
+                #print(n)
+            else:
+                #print(n)
+                motion_library.play('Forwards')
+                #motion_library.play('TestMove')
+            n=n+1
 
 
 # create the Robot instance and run main loop
